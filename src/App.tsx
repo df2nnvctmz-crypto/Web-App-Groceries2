@@ -1183,16 +1183,32 @@ export default function App() {
   const [animationTrigger, setAnimationTrigger] = useState(0);
 
   const [favoriteFoodIds, setFavoriteFoodIds] = useState<string[]>(() => {
-    const saved = localStorage.getItem('favoriteFoodIds');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('favoriteFoodIds');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      // ignore
+    }
+    return [];
   });
   useEffect(() => {
     localStorage.setItem('favoriteFoodIds', JSON.stringify(favoriteFoodIds));
   }, [favoriteFoodIds]);
 
   const [favoriteSwapIds, setFavoriteSwapIds] = useState<string[]>(() => {
-    const saved = localStorage.getItem('favoriteSwapIds');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('favoriteSwapIds');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      // ignore
+    }
+    return [];
   });
   useEffect(() => {
     localStorage.setItem('favoriteSwapIds', JSON.stringify(favoriteSwapIds));
@@ -1218,8 +1234,16 @@ export default function App() {
   };
 
   const [receipts, setReceipts] = useState<any[]>(() => {
-    const saved = localStorage.getItem('receipts');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('receipts');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      // ignore
+    }
+    return [];
   });
   useEffect(() => {
     localStorage.setItem('receipts', JSON.stringify(receipts));
@@ -1230,11 +1254,13 @@ export default function App() {
       const saved = localStorage.getItem('dynamicFoods');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0 && !parsed[0].nutrients_per_100) {
-          localStorage.removeItem('dynamicFoods');
-          return [];
+        if (Array.isArray(parsed)) {
+          if (parsed.length > 0 && !parsed[0].nutrients_per_100) {
+            localStorage.removeItem('dynamicFoods');
+            return [];
+          }
+          return parsed;
         }
-        return parsed;
       }
     } catch (e) {
       // ignore
@@ -1244,6 +1270,7 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('dynamicFoods', JSON.stringify(dynamicFoods));
   }, [dynamicFoods]);
+
   const [isGeneratingFood, setIsGeneratingFood] = useState(false);
   const [userProfile, setUserProfile] = useState(() => {
     const saved = localStorage.getItem('userProfile');
@@ -1261,13 +1288,16 @@ export default function App() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (!parsed.dietaryPreferences) {
-          parsed.dietaryPreferences = parsed.dietaryPreference ? [parsed.dietaryPreference] : ['None'];
+        if (parsed && typeof parsed === 'object') {
+          const merged = { ...defaultProfile, ...parsed };
+          if (!merged.dietaryPreferences) {
+            merged.dietaryPreferences = merged.dietaryPreference ? [merged.dietaryPreference] : ['None'];
+          }
+          if (!merged.weightGoalRate) {
+            merged.weightGoalRate = 'stay';
+          }
+          return merged;
         }
-        if (!parsed.weightGoalRate) {
-          parsed.weightGoalRate = 'stay';
-        }
-        return parsed;
       } catch (e) {
         return defaultProfile;
       }
